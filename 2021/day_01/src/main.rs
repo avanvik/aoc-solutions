@@ -1,5 +1,12 @@
 mod input;
 
+/*
+    ADVENT of CODE - Day 1
+
+    Part 1: Count each depth increase
+    Part 2: Count each sliding window depth increase
+*/
+
 fn main() {
     let increases = count_depth_increases(input::REAL_INPUT, 1);
     let increases_sliding_window = count_depth_increases(input::REAL_INPUT, 3);
