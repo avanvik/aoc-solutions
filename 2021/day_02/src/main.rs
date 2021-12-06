@@ -2,7 +2,7 @@
     ADVENT of CODE - Day 2 "Dive!"
 
     Part 1: Parse navigation instructions and calculate position product
-    Part 2: Count each sliding window depth increase
+    Part 2: Calculate position with updated navigation logic
 */
 
 fn main() {
