@@ -26,6 +26,27 @@ fn main() {
     println!("Epsilon: {}", epsilon);
 
     println!("Product: {}", gamma * epsilon);
+
+    println!("\nLIFE SUPPORT");
+
+    let o2_rating = get_oxygen_rating(&bitvecs);
+    println!(
+        "Oxygen rating: {} | Decimal: {}",
+        bitvec_to_string(&o2_rating),
+        bitvec_to_decimal(&o2_rating)
+    );
+
+    let co2_rating = get_co2_rating(&bitvecs);
+    println!(
+        "CO2 rating: {} | Decimal: {}",
+        bitvec_to_string(&co2_rating),
+        bitvec_to_decimal(&co2_rating)
+    );
+
+    println!(
+        "CO2 * O2 = {}",
+        bitvec_to_decimal(&o2_rating) * bitvec_to_decimal(&co2_rating)
+    )
 }
 
 fn read_file_to_string(path: &str) -> String {
@@ -105,6 +126,82 @@ fn calculate_epsilon(bitvec: &Bitvec) -> usize {
 }
 fn calculate_gamma(bitvec: &Bitvec) -> usize {
     bitvec_to_decimal(&bitvec)
+}
+
+fn get_dominant_bit_at_index(bitvecs: &Vec<Bitvec>, index: usize) -> Bit {
+    let mut sum = 0;
+    for bitvec in bitvecs {
+        match bitvec.get(index).unwrap() {
+            Bit::One => sum += 1,
+            Bit::Zero => sum -= 1,
+        }
+    }
+
+    if sum >= 0 {
+        Bit::One
+    } else {
+        Bit::Zero
+    }
+}
+
+fn get_matching_bitvecs(bitvecs: &Vec<Bitvec>, with_value: Bit, at_position: usize) -> Vec<Bitvec> {
+    let mut matches = vec![];
+
+    for bitvec in bitvecs {
+        let val = bitvec
+            .get(at_position)
+            .expect("Could not get bit at position");
+
+        if format!("{:?}", val) == format!("{:?}", with_value) {
+            matches.push(bitvec.clone());
+        }
+    }
+
+    matches
+}
+
+fn get_oxygen_rating(bitvecs: &Vec<Bitvec>) -> Bitvec {
+    let mut matches = bitvecs.clone();
+    let bitvec_length = bitvecs
+        .get(0)
+        .expect("Could not get bitvec at index 0")
+        .len();
+
+    // For each bitvec position, find dominant bit.
+    // Then filter list of bitvecs for next iteration.
+    for i in 0..bitvec_length {
+        let dominant_bit = get_dominant_bit_at_index(&matches, i);
+        let new_matches = get_matching_bitvecs(&matches, dominant_bit, i);
+        matches = new_matches;
+
+        if matches.len() == 1 {
+            break;
+        }
+    }
+    let final_bitvec = matches.get(0).unwrap();
+    final_bitvec.clone()
+}
+
+fn get_co2_rating(bitvecs: &Vec<Bitvec>) -> Bitvec {
+    let mut matches = bitvecs.clone();
+    let bitvec_length = bitvecs
+        .get(0)
+        .expect("Could not get bitvec at index 0")
+        .len();
+
+    // For each bitvec position, find dominant bit.
+    // Then filter list of bitvecs for next iteration.
+    for i in 0..bitvec_length {
+        let dominant_bit = get_dominant_bit_at_index(&matches, i).flip();
+        let new_matches = get_matching_bitvecs(&matches, dominant_bit, i);
+        matches = new_matches;
+
+        if matches.len() == 1 {
+            break;
+        }
+    }
+    let final_bitvec = matches.get(0).unwrap();
+    final_bitvec.clone()
 }
 
 #[cfg(test)]

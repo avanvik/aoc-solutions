@@ -1,9 +1,18 @@
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Bit {
     Zero,
     One,
+}
+
+impl Bit {
+    pub fn flip(&mut self) -> Self {
+        match self {
+            Bit::One => Bit::Zero,
+            Bit::Zero => Bit::One,
+        }
+    }
 }
 
 impl std::fmt::Display for Bit {
