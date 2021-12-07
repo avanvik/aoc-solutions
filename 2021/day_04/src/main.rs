@@ -16,8 +16,8 @@ use board::{Board, BoardCell};
 */
 
 fn main() {
-    let mut boards = read_boards_from_file("test_data_boards.txt");
-    let numbers: Vec<usize> = read_numbers_from_file("test_data_numbers.txt");
+    let mut boards = read_boards_from_file("real_data_boards.txt");
+    let numbers: Vec<usize> = read_numbers_from_file("real_data_numbers.txt");
     let highscores = calculate_highscore_list(&mut boards, numbers);
 
     println!("Winner score: {}", highscores[0]);
@@ -68,29 +68,24 @@ fn read_numbers_from_file(path: &str) -> Vec<usize> {
 }
 
 fn calculate_highscore_list(boards: &mut Vec<Board>, numbers: Vec<usize>) -> Vec<usize> {
-    let board_len = boards.len();
+    let boards_len = boards.len();
     let mut highscores: Vec<usize> = vec![];
 
-    for number in numbers {
-        print!("\n----------- Number {number} -----------\n");
+    'rounds: for number in numbers {
         for board in boards.iter_mut() {
             let (old_row, old_col) = board.get_marked().clone();
             board.mark_cell_with_number(number);
             let (row, col) = board.get_marked();
-            print!("{}", board);
-            println!("Old row: {}, col: {}", old_row, old_col);
-            println!("New row: {}, col: {}", row, col);
 
-            if (old_row < 5 && row == 5) || (old_col < 5 && col == 5) {
+            if (old_col < 5 && old_row < 5 && row == 5) || (old_row < 5 && old_col < 5 && col == 5)
+            {
                 highscores.push(board.get_board_score(number));
+                if highscores.len() == boards_len {
+                    break 'rounds;
+                }
             };
         }
-
-        if highscores.len() >= board_len {
-            break;
-        }
     }
-
     highscores
 }
 

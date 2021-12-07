@@ -33,4 +33,11 @@ fn it_calculates_loser_board_score() {
 
     let last_score_entry = *highscores.last().unwrap();
     assert_eq!(last_score_entry, 1924);
+
+    let mut boards = read_boards_from_file("real_data_boards.txt");
+    let numbers = read_numbers_from_file("real_data_numbers.txt");
+    let highscores = calculate_highscore_list(&mut boards, numbers);
+
+    let last_score_entry = *highscores.last().unwrap();
+    assert_eq!(last_score_entry, 5586);
 }
