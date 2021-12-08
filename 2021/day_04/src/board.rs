@@ -104,11 +104,6 @@ impl fmt::Display for Board {
             })
         });
 
-        // write!(
-        //     f,
-        //     "\nRows {:?} \nCols {:?} \n{}",
-        //     self.row_marks, self.col_marks, sum_str
-        // )
         write!(f, "\n{}\n", sum_str)
     }
 }
