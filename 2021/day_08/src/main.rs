@@ -7,43 +7,49 @@ use std::collections::HashMap;
     Part 2:
 */
 
+const DEBUG: bool = false;
+
 fn main() {
     let digits = parse_digits_from_file("real_data.txt");
-    // let mut count = 0;
-    // let parsed_digits: Vec<Vec<usize>> = digits
-    //     .iter()
-    //     .map(|digit| {
-    //         digit
-    //             .output
-    //             .iter()
-    //             .map(|s| {
-    //                 if let Some(num) = deduce_num(s) {
-    //                     count += 1;
-    //                     num
-    //                 } else {
-    //                     0
-    //                 }
-    //             })
-    //             .collect()
-    //     })
-    //     .collect();
+    let mut sum = 0;
 
-    // println!("Count: {}", count);
+    for digit in &digits {
+        let mut built_num: Vec<String> = vec![];
 
-    for line in &digits {
-        let map = map_char_to_char_for_display(&line.input);
+        let char_map = map_chars_for_display(&digit.input);
 
-        // TODO: Print map in alphabetic order
-        let mut sorted_map: Vec<_> = map.iter().collect();
-        sorted_map.sort_by_key(|v| v.0);
+        if DEBUG {
+            println!("{:?} | {:?}", &digit.input, &digit.output);
+            println!("{:?}", char_map);
+        }
 
-        println!("{:?}", sorted_map);
+        for num in &digit.output {
+            let decoded_str = convert_str_with_map(&char_map, &num);
+            let decoded_num = str_to_num(&decoded_str).expect("Could parse segments as number");
+
+            built_num.push(decoded_num.to_string());
+        }
+
+        let segment_num = built_num
+            .iter()
+            .flat_map(|c| c.chars())
+            .collect::<String>()
+            .parse::<usize>()
+            .expect("Could not parse number");
+
+        sum += segment_num;
     }
+
+    println!("SUM {}", sum);
 }
 
-fn _str_to_num(s: &str) -> Option<usize> {
+fn str_to_num(s: &str) -> Option<usize> {
     let mut word: Vec<char> = String::from(s).chars().collect();
     word.sort();
+
+    if DEBUG {
+        println!("Sorted: {:?}", word);
+    }
 
     match String::from_iter(word).as_str() {
         "abcefg" => Some(0),
@@ -55,25 +61,25 @@ fn _str_to_num(s: &str) -> Option<usize> {
         "abdefg" => Some(6),
         "acf" => Some(7),
         "abcdefg" => Some(8),
-        "abcdfg" => Some(0),
+        "abcdfg" => Some(9),
         _ => None,
     }
 }
 
 /// Output: HashMap(a => c, b => d, c => f, ...)
-fn map_char_to_char_for_display(display_inputs: &Vec<String>) -> HashMap<char, char> {
+fn map_chars_for_display(display_inputs: &Vec<String>) -> HashMap<char, char> {
     /*
         num 0  (1)  2   3  (4)  5   6  (7) (8)  9
         len 6   2   5   5   4   5   6   3   7   6
 
         Segments
         ch  occ rules
-        a   8   "7" not "1"
-        b   6   (occurs 6 times)
+        a   8   in "7" and not in "1"
+        b  (6)  (occurs 6 times)
         c   8   (occurs 8 times) and (not e)
-        d   7   (in "7" and not in "4")
-        e   4   (occurs 4 times) or ("8" not "9")
-        f   9   (occurs 9 times) or (2 not (3 and e))
+        d   7   in "7" and not in "4"
+        e  (4)  (occurs 4 times) or ("8" not "9")
+        f  (9)  (occurs 9 times) or (2 not (3 and e))
         g   7   (occurs 7 times) and (not d)
     */
 
@@ -94,13 +100,9 @@ fn map_char_to_char_for_display(display_inputs: &Vec<String>) -> HashMap<char, c
         .filter(|s| s.len() == 3)
         .flat_map(|s| s.chars())
         .collect();
-    let _segments_in_8: Vec<char> = display_inputs
-        .iter()
-        .filter(|s| s.len() == 7)
-        .flat_map(|s| s.chars())
-        .collect();
 
     let mut char_occurrences: HashMap<char, usize> = HashMap::new();
+
     for word in display_inputs {
         for character in word.chars() {
             let val = *char_occurrences.get(&character).unwrap_or(&0);
@@ -108,146 +110,101 @@ fn map_char_to_char_for_display(display_inputs: &Vec<String>) -> HashMap<char, c
         }
     }
 
-    // ch  occ rules
-    // a   8   "7" not "1"
-    let (seg_a, _) = &char_occurrences
+    let seg_a = &char_occurrences
         .clone()
         .into_iter()
-        .find(|(c, occ)| occ == &8 && segments_in_7.contains(c) && !segments_in_1.contains(c))
-        .expect("Could not find segment A");
+        .filter(|(c, occ)| occ == &8 && segments_in_7.contains(c) && !segments_in_1.contains(c))
+        .collect::<Vec<_>>();
 
-    println!(
-        "Finding segment A: {:?}",
-        &char_occurrences
-            .clone()
-            .into_iter()
-            .filter(|(c, occ)| occ == &8 && segments_in_7.contains(c) && !segments_in_1.contains(c))
-            .collect::<Vec<_>>()
-    );
+    if DEBUG {
+        println!("SEG A: {:?}", seg_a);
+    }
+    let seg_a = seg_a.last().expect("Could not find segment A");
 
-    // ch  occ rules
-    // b   6   (occurs 6 times)
-    let (seg_b, _) = &char_occurrences
+    let seg_b = &char_occurrences
         .clone()
         .into_iter()
-        .find(|(_, occ)| occ == &6)
-        .expect("Could not find segment with 6 occurrences");
+        .filter(|(_, occ)| occ == &6)
+        .collect::<Vec<_>>();
 
-    println!(
-        "Finding segment B: {:?}",
-        &char_occurrences
-            .clone()
-            .into_iter()
-            .filter(|(_, occ)| occ == &6)
-            .collect::<Vec<_>>()
-    );
+    if DEBUG {
+        println!("SEG B: {:?}", seg_b)
+    };
+    let seg_b = seg_b.last().expect("Could not find segment B");
 
-    // ch  occ rules
-    // e   4   (occurs 4 times) or ("8" not "9")
-    let (seg_e, _) = &char_occurrences
+    let seg_e = &char_occurrences
         .clone()
         .into_iter()
-        .find(|(_, occ)| occ == &4)
-        .expect("Could not find segment with 4 occurrences");
+        .filter(|(_, occ)| occ == &4)
+        .collect::<Vec<_>>();
 
-    println!(
-        "Finding segment E: {:?}",
-        &char_occurrences
-            .clone()
-            .into_iter()
-            .filter(|(_, occ)| occ == &4)
-            .collect::<Vec<_>>()
-    );
+    if DEBUG {
+        println!("SEG E: {:?}", seg_e);
+    }
+    let seg_e = seg_e.last().expect("Could not find segment E");
 
-    // ch  occ rules
-    // c   8   (occurs 8 times) and (not a)
-    let (seg_c, _) = &char_occurrences
+    let seg_c = &char_occurrences
         .clone()
         .into_iter()
-        .filter(|(c, occ)| occ == &8 && *c != *seg_a)
-        .last()
-        .expect("Could not find segment for 'c'");
+        .filter(|(c, occ)| occ == &8 && c != &seg_a.0)
+        .collect::<Vec<_>>();
 
-    println!(
-        "Finding segment C: {:?}",
-        &char_occurrences
-            .clone()
-            .into_iter()
-            .filter(|(_c, occ)| occ == &8)
-            .filter(|(c, _occ)| *c != *seg_a)
-            .collect::<Vec<_>>()
-    );
+    if DEBUG {
+        println!("SEG C: {:?}", seg_c);
+    }
+    let seg_c = seg_c.last().expect("Could not find segment C");
 
-    // ch  occ rules
-    // f   9   (occurs 9 times) or (2 not (3 and e))
-    let (seg_f, _) = &char_occurrences
+    let seg_f = &char_occurrences
         .clone()
         .into_iter()
-        .find(|(_, occ)| occ == &9)
-        .expect("Could not find segment with 9 occurrences");
+        .filter(|(_, occ)| occ == &9)
+        .collect::<Vec<_>>();
 
-    println!(
-        "Finding segment F: {:?}",
-        &char_occurrences
-            .clone()
-            .into_iter()
-            .filter(|(_, occ)| occ == &9)
-            .collect::<Vec<_>>()
-    );
+    if DEBUG {
+        println!("SEG F: {:?}", seg_f);
+    }
+    let seg_f = seg_f.last().expect("Could not find segment F");
 
-    // ch  occ rules
-    // d   7   (in "7" and not in "4")
-    let (seg_d, _) = &char_occurrences
+    let seg_d = &char_occurrences
         .clone()
         .into_iter()
-        .find(|(c, occ)| occ == &7 && !segments_in_7.contains(c) && segments_in_4.contains(c))
-        .expect("Could not find segment D");
+        .filter(|(c, occ)| occ == &7 && !segments_in_7.contains(c) && segments_in_4.contains(c))
+        .collect::<Vec<_>>();
 
-    println!(
-        "Finding segment D: {:?}",
-        &char_occurrences
-            .clone()
-            .into_iter()
-            .filter(|(c, occ)| occ == &7 && !segments_in_7.contains(c) && segments_in_4.contains(c))
-            .collect::<Vec<_>>()
-    );
+    if DEBUG {
+        println!("SEG D: {:?}", seg_d);
+    }
+    let seg_d = seg_d.last().expect("Could not find segment D");
 
-    // ch  occ rules
-    // g   7   (occurs 7 times) and (not c)
-    let (seg_g, _) = &char_occurrences
+    let seg_g = &char_occurrences
         .clone()
         .into_iter()
-        .find(|(c, occ)| occ == &7 && *c != *seg_d)
-        .expect("Could not find segment with ---");
+        .filter(|(c, occ)| occ == &7 && c != &seg_d.0)
+        .collect::<Vec<_>>();
 
-    println!(
-        "Finding segment G: {:?}",
-        &char_occurrences
-            .clone()
-            .into_iter()
-            .filter(|(c, occ)| occ == &7 && c != seg_d)
-            .collect::<Vec<_>>()
-    );
+    if DEBUG {
+        println!("SEG G: {:?}", seg_g);
+    }
+    let seg_g = seg_g.last().expect("Could not find segment G");
 
-    char_map.insert('a', *seg_a);
-    char_map.insert('b', *seg_b);
-    char_map.insert('c', *seg_c);
-    char_map.insert('d', *seg_d);
-    char_map.insert('e', *seg_e);
-    char_map.insert('f', *seg_f);
-    char_map.insert('g', *seg_g);
+    char_map.insert(seg_a.0, 'a');
+    char_map.insert(seg_b.0, 'b');
+    char_map.insert(seg_c.0, 'c');
+    char_map.insert(seg_d.0, 'd');
+    char_map.insert(seg_e.0, 'e');
+    char_map.insert(seg_f.0, 'f');
+    char_map.insert(seg_g.0, 'g');
 
     char_map
 }
 
-fn _num_from_len(s: &str) -> Option<usize> {
-    match s.len() {
-        2 => Some(1),
-        4 => Some(4),
-        3 => Some(7),
-        7 => Some(8),
-        _ => None,
-    }
+fn convert_str_with_map(char_map: &HashMap<char, char>, input: &String) -> String {
+    input
+        .clone()
+        .chars()
+        .into_iter()
+        .map(|c| char_map.get(&c).unwrap())
+        .collect()
 }
 
 fn parse_digits_from_file(path: &str) -> Vec<Digit> {
@@ -260,7 +217,7 @@ fn parse_digits_from_file(path: &str) -> Vec<Digit> {
 
             Digit {
                 input: data[0].split(" ").map(|d| String::from(d)).collect(),
-                _output: data[1].split(" ").map(|d| String::from(d)).collect(),
+                output: data[1].split(" ").map(|d| String::from(d)).collect(),
             }
         })
         .collect()
@@ -268,7 +225,7 @@ fn parse_digits_from_file(path: &str) -> Vec<Digit> {
 
 struct Digit {
     input: Vec<String>,
-    _output: Vec<String>,
+    output: Vec<String>,
 }
 
 #[cfg(test)]
